@@ -165,9 +165,7 @@ const App = (function () {
   function isStudyView() { return STUDY_VIEWS.includes(currentView); }
 
   function updateTimerDisplay() {
-    const sec = (Store.daily().seconds || 0) + pendingSeconds;
-    const m = Math.floor(sec / 60);
-    $('studyTimer').textContent = `今日学习 ${String(m).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+    // 右上角学习时长已移除;学习时长仍在后台记录,并在首页/统计页展示
   }
 
   function startTimer() {

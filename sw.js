@@ -1,5 +1,5 @@
 /* Service Worker — 离线缓存(PWA) */
-const CACHE = 'cet4-app-v5';
+const CACHE = 'cet4-app-v6';
 const ASSETS = [
   './',
   './index.html',
