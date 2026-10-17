@@ -47,13 +47,40 @@ const App = (function () {
 
   /* ---------- 首页 ---------- */
   let timeOffset = 0;      // 网络时间 - 本地时间(毫秒)
+  const TIME_OFFSET_KEY = 'cet4_time_offset_v1';
 
   function now() {
     return new Date(Date.now() + timeOffset);
   }
+  window.__getNow = now;   // 供 storage.js 的日期统计使用
+
+  function loadCachedOffset() {
+    try {
+      const v = JSON.parse(localStorage.getItem(TIME_OFFSET_KEY) || 'null');
+      if (v && typeof v.offset === 'number') timeOffset = v.offset;
+    } catch (e) { /* 忽略 */ }
+  }
+  function saveOffset() {
+    try {
+      localStorage.setItem(TIME_OFFSET_KEY, JSON.stringify({ offset: timeOffset, at: Date.now() }));
+    } catch (e) { /* 忽略 */ }
+  }
+
+  function showTimeHint(extra) {
+    const hint = $('timeSyncHint');
+    if (!hint) return;
+    const d = now();
+    const diff = Math.round(timeOffset / 1000);
+    let text = `⏱ 网络时间:${d.toLocaleString('zh-CN')}`;
+    if (Math.abs(diff) >= 1) text += `(已校准设备偏差 ${diff > 0 ? '+' : ''}${diff} 秒)`;
+    hint.textContent = text + (extra ? ' · ' + extra : '');
+  }
 
   async function syncTime() {
-    const hint = $('timeSyncHint');
+    // 先应用上次校准值,离线也能用
+    loadCachedOffset();
+    showTimeHint();
+    refreshHome();
     try {
       const res = await fetch(location.href.split('#')[0], { method: 'HEAD', cache: 'no-store' });
       const dateStr = res.headers.get('date');
@@ -61,17 +88,11 @@ const App = (function () {
         const serverMs = new Date(dateStr).getTime();
         if (!isNaN(serverMs)) {
           timeOffset = serverMs - Date.now();
-          if (hint) {
-            const diff = Math.round(timeOffset / 1000);
-            hint.textContent = Math.abs(diff) >= 1
-              ? `⏱ 倒计时已按网络时间校准(本地偏差 ${diff > 0 ? '+' : ''}${diff} 秒)`
-              : '⏱ 倒计时已按网络时间校准';
-          }
+          saveOffset();
         }
       }
-    } catch (e) {
-      if (hint) hint.textContent = '⏱ 无法获取网络时间,暂用设备时间';
-    }
+    } catch (e) { /* 保留缓存偏移或设备时间 */ }
+    showTimeHint();
     refreshHome();
   }
 
@@ -162,7 +183,7 @@ const App = (function () {
     setInterval(() => {
       if (document.hidden) return;           // 切后台暂停
       if (!isStudyView()) return;            // 只在练习页面计时
-      if (Date.now() - lastActivity > 120000) return; // 2 分钟无操作暂停
+      if (Date.now() - lastActivity > 300000) return; // 5 分钟无操作暂停(阅读/思考时间)
       pendingSeconds += 5;
       if (pendingSeconds >= 30) {
         Store.addStudySeconds(pendingSeconds);
@@ -234,6 +255,13 @@ const App = (function () {
     });
     $('setReviewDay').addEventListener('change', e => {
       Store.setSettings({ reviewDay: Number(e.target.value) });
+      refreshHome();
+    });
+    $('syncTimeBtn').addEventListener('click', async () => {
+      const el = $('syncTimeResult');
+      el.textContent = '正在校准…';
+      await syncTime();
+      el.textContent = '✅ 校准完成,当前网络时间:' + now().toLocaleString('zh-CN');
       refreshHome();
     });
     document.querySelectorAll('.theme-dot').forEach(b => {
@@ -443,6 +471,7 @@ const App = (function () {
     registerSW();
     if (window.TTS) TTS.loadVoices();
     syncTime();
+    setInterval(() => { showTimeHint(); }, 60000);   // 每分钟刷新网络时间显示
     switchView('home');
   }
 

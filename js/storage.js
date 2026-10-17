@@ -57,8 +57,12 @@ const Store = (function () {
   }
 
   /* ---------- 日期工具 ---------- */
+  function currentTime() {
+    // 优先使用 app.js 校准后的时间(网络时间),否则回退设备时间
+    return window.__getNow ? window.__getNow() : new Date();
+  }
   function todayStr(d) {
-    const t = d || new Date();
+    const t = d || currentTime();
     const y = t.getFullYear();
     const m = String(t.getMonth() + 1).padStart(2, '0');
     const day = String(t.getDate()).padStart(2, '0');
@@ -69,7 +73,7 @@ const Store = (function () {
 
   // 本周一 00:00
   function weekStart(d) {
-    const t = new Date(d || new Date());
+    const t = new Date(d || currentTime());
     const day = t.getDay(); // 0=周日
     const diff = day === 0 ? 6 : day - 1;
     t.setDate(t.getDate() - diff);
@@ -222,7 +226,7 @@ const Store = (function () {
   }
   function shouldRemindReview() {
     const info = weeklyInfo();
-    const todayDow = new Date().getDay();
+    const todayDow = currentTime().getDay();
     return todayDow === Number(state.settings.reviewDay) &&
       info.words.length > 0 && !info.done;
   }
