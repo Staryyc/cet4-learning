@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f8fa">
+<title>四级备考 · 个人学习</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-theme="light">
+
+<div class="app">
+  <!-- ===== 顶栏 ===== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">四级备考</span>
+      <span class="exam-badge" id="examCountdown">--</span>
+    </div>
+    <div class="topbar-right">
+      <span class="study-timer" id="studyTimer" title="今日有效学习时长">今日 00:00</span>
+    </div>
+  </header>
+
+  <!-- ===== 侧边导航(电脑) ===== -->
+  <aside class="sidebar" id="sidebar">
+    <nav>
+      <button class="nav-item active" data-view="home"><span class="ico">🏠</span>首页</button>
+      <button class="nav-item" data-view="vocab"><span class="ico">📖</span>单词短语</button>
+      <button class="nav-item" data-view="listening"><span class="ico">🎧</span>听力</button>
+      <button class="nav-item" data-view="writing"><span class="ico">✍️</span>作文</button>
+      <button class="nav-item" data-view="stats"><span class="ico">📊</span>统计</button>
+      <button class="nav-item" data-view="settings"><span class="ico">⚙️</span>设置</button>
+    </nav>
+    <div class="sidebar-foot">数据保存在本机浏览器</div>
+  </aside>
+
+  <!-- ===== 主内容 ===== -->
+  <main class="main" id="main">
+
+    <!-- 首页 -->
+    <section class="view active" id="view-home">
+      <div class="hero">
+        <div class="hero-countdown">
+          <div class="hero-label">距离四级考试</div>
+          <div class="hero-days"><span id="homeDays">--</span><small>天</small></div>
+          <div class="hero-date" id="homeExamDate">考试日期未设置</div>
+        </div>
+        <div class="hero-progress">
+          <div class="hero-label">今日新词</div>
+          <div class="progress-ring">
+            <svg viewBox="0 0 120 120">
+              <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"></circle>
+            </svg>
+            <div class="ring-text"><span id="newDone">0</span><i>/</i><span id="newGoal">30</span></div>
+          </div>
+          <div class="hero-sub" id="newWordsHint">今日已学 0 个新词</div>
+        </div>
+        <div class="hero-time">
+          <div class="hero-label">今日学习</div>
+          <div class="hero-minutes"><span id="homeMinutes">0</span><small>分钟</small></div>
+          <div class="hero-sub">仅统计实际练习时间</div>
+        </div>
+      </div>
+
+      <div class="review-banner hidden" id="weeklyReviewBanner">
+        <div>
+          <strong>📅 本周复习提醒</strong>
+          <p id="reviewBannerText">本周学过的词条需要复习</p>
+        </div>
+        <button class="btn primary" id="startWeeklyReview">开始复习</button>
+      </div>
+
+      <div class="entry-grid">
+        <button class="entry-card" data-view="vocab">
+          <span class="entry-ico">📖</span>
+          <span class="entry-title">单词 · 短语</span>
+          <span class="entry-desc">选择、拼写、翻译练习</span>
+          <span class="entry-meta" id="entryVocabMeta">待学词条</span>
+        </button>
+        <button class="entry-card" data-view="listening">
+          <span class="entry-ico">🎧</span>
+          <span class="entry-title">听力</span>
+          <span class="entry-desc">听写 · 短句 · 场景材料</span>
+          <span class="entry-meta">慢速 / 重复 / 挖空</span>
+        </button>
+        <button class="entry-card" data-view="writing">
+          <span class="entry-ico">✍️</span>
+          <span class="entry-title">作文</span>
+          <span class="entry-desc">题目 · 模板 · AI 批改</span>
+          <span class="entry-meta" id="entryWritingMeta">历史作文 0 篇</span>
+        </button>
+        <button class="entry-card" data-view="stats">
+          <span class="entry-ico">📊</span>
+          <span class="entry-title">学习统计</span>
+          <span class="entry-desc">正确率 · 掌握情况 · 易错词</span>
+          <span class="entry-meta" id="entryStatsMeta">连续学习 0 天</span>
+        </button>
+      </div>
+
+      <div class="card daily-tip">
+        <h3>今日建议</h3>
+        <p id="dailyTip">词库共 2607 个四级词条。学习内容由你自由选择,不强制顺序,也不强制时长。</p>
+      </div>
+    </section>
+
+    <!-- 单词与短语 -->
+    <section class="view" id="view-vocab">
+      <div class="section-head">
+        <h2>单词 · 短语</h2>
+        <div class="muted" id="vocabSource"></div>
+      </div>
+
+      <div class="toolbar card">
+        <label class="field">
+          <span>练习模式</span>
+          <select id="vocabMode">
+            <option value="en2cn">看英文选中文</option>
+            <option value="cn2en">看中文拼写英文</option>
+            <option value="phrase2cn">英文短语译中文</option>
+            <option value="phrase2en">中文短语译英文</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>学习顺序</span>
+          <select id="vocabOrder">
+            <option value="seq">顺序学习</option>
+            <option value="random">随机学习</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>练习范围</span>
+          <select id="vocabScope">
+            <option value="all">全部词条</option>
+            <option value="unmastered">仅未掌握</option>
+            <option value="wrong">仅错词</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>本轮题量</span>
+          <select id="vocabLimit">
+            <option value="20">20 题</option>
+            <option value="50">50 题</option>
+            <option value="100">100 题</option>
+            <option value="0">全部</option>
+          </select>
+        </label>
+        <div class="toolbar-actions">
+          <button class="btn" id="vocabReplay" title="重听发音">🔊 重听</button>
+          <button class="btn primary" id="vocabRestart">开始 / 重置</button>
+        </div>
+      </div>
+
+      <div class="practice card" id="vocabPractice">
+        <div class="practice-top">
+          <span class="chip" id="vocabProgress">0 / 0</span>
+          <span class="chip" id="vocabStreakHint">连续正确 0 次</span>
+          <button class="btn ghost small" id="vocabShowAnswer">查看答案</button>
+        </div>
+        <div class="question" id="vocabQuestion">点击「开始 / 重置」进入练习</div>
+        <div class="prompt-detail" id="vocabPromptDetail"></div>
+
+        <div class="options hidden" id="vocabOptions"></div>
+        <div class="spell-area hidden" id="vocabSpellArea">
+          <input type="text" id="vocabInput" placeholder="输入答案后按回车提交" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button class="btn primary" id="vocabSubmit">提交</button>
+        </div>
+
+        <div class="feedback hidden" id="vocabFeedback"></div>
+
+        <div class="examples hidden" id="vocabExamples">
+          <div class="examples-head">
+            <span>📝 例句</span>
+            <button class="btn small" id="vocabGenExample">✨ AI 生成例句</button>
+          </div>
+          <div id="vocabExampleList" class="example-list"></div>
+          <div class="muted small" id="vocabExampleNote"></div>
+        </div>
+
+        <div class="practice-foot">
+          <button class="btn ghost" id="vocabNext">下一题 →</button>
+        </div>
+        <div class="meta-line" id="vocabMetaLine"></div>
+      </div>
+
+      <div class="card phrases-note">
+        <h3>关于短语练习</h3>
+        <p>短语为常用四级搭配,属自编整理,非完整词表;同义表达将按语义判定,不因措辞不同直接判错。</p>
+      </div>
+    </section>
+
+    <!-- 听力 -->
+    <section class="view" id="view-listening">
+      <div class="section-head">
+        <h2>听力</h2>
+        <div class="muted">合成语音标注;真题材料仅使用可合法来源</div>
+      </div>
+
+      <div class="toolbar card">
+        <label class="field">
+          <span>材料类型</span>
+          <select id="listenType">
+            <option value="word">单词听写</option>
+            <option value="phrase">短语听写</option>
+            <option value="sentence">短句理解</option>
+            <option value="dialog">短对话理解</option>
+            <option value="scene">高频场景短文</option>
+          </select>
+        </label>
+        <div class="toolbar-actions">
+          <button class="btn" id="listenPlay">🔊 播放</button>
+          <button class="btn" id="listenSlow">🐢 慢速</button>
+          <button class="btn" id="listenRepeat">🔁 重复</button>
+          <button class="btn primary" id="listenNew">换一题</button>
+        </div>
+      </div>
+
+      <div class="practice card">
+        <div class="practice-top">
+          <span class="chip" id="listenBadge">语音合成</span>
+          <span class="chip" id="listenCount">已练 0 题</span>
+          <button class="btn ghost small" id="listenShowText">显示原文</button>
+        </div>
+        <div class="question" id="listenPrompt">点击「换一题」开始听力练习</div>
+        <div class="prompt-detail" id="listenSub"></div>
+
+        <div class="options hidden" id="listenOptions"></div>
+        <div class="spell-area hidden" id="listenSpellArea">
+          <input type="text" id="listenInput" placeholder="听写内容,回车提交" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <button class="btn primary" id="listenSubmit">提交</button>
+        </div>
+
+        <div class="feedback hidden" id="listenFeedback"></div>
+        <div class="practice-foot">
+          <button class="btn ghost" id="listenNext">下一题 →</button>
+        </div>
+        <div class="meta-line" id="listenMetaLine">独立作答与辅助完成分开统计;查看原文后作答记为辅助完成,得分折半。</div>
+      </div>
+    </section>
+
+    <!-- 作文 -->
+    <section class="view" id="view-writing">
+      <div class="section-head">
+        <h2>作文</h2>
+        <div class="muted">AI 评分仅为参考,不代表官方阅卷结果</div>
+      </div>
+
+      <div class="toolbar card">
+        <label class="field">
+          <span>作文题目</span>
+          <select id="writingTopic"></select>
+        </label>
+        <label class="field">
+          <span>自定义题目(可选,优先使用)</span>
+          <input type="text" id="writingCustomTopic" placeholder="输入英文题目,如:My Ideal University Life">
+        </label>
+        <div class="toolbar-actions">
+          <button class="btn" id="writingTemplate">查看模板/句型</button>
+          <button class="btn primary" id="writingSubmit">AI 批改</button>
+        </div>
+      </div>
+
+      <div class="card writing-editor">
+        <div class="editor-head">
+          <span id="writingTopicTitle">请选择题目</span>
+          <span class="muted" id="writingWordCount">0 词</span>
+        </div>
+        <textarea id="writingInput" placeholder="在此输入英文作文(建议 120-180 词)……" spellcheck="false"></textarea>
+        <div class="writing-hint">
+          ⚠️ 提交后会将其发送至你配置的第三方 AI 服务处理。未配置或请求失败时不会显示任何评分。
+        </div>
+      </div>
+
+      <div class="card hidden" id="writingResult">
+        <div class="result-head">
+          <div class="score-box"><span id="writingScore">--</span><small>/15 参考分</small></div>
+          <div>
+            <div class="result-level" id="writingLevel"></div>
+            <div class="muted" id="writingTime"></div>
+          </div>
+        </div>
+        <div class="result-summary" id="writingSummary"></div>
+        <div class="issue-list" id="writingIssues"></div>
+      </div>
+
+      <div class="card">
+        <h3>历史作文</h3>
+        <div id="writingHistory" class="history-list"></div>
+      </div>
+    </section>
+
+    <!-- 统计 -->
+    <section class="view" id="view-stats">
+      <div class="section-head">
+        <h2>学习统计</h2>
+        <div class="muted">统计基于本浏览器保存的数据</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="statDays">0</div><div class="stat-label">连续学习天数</div></div>
+        <div class="stat-card"><div class="stat-num" id="statTodayMin">0</div><div class="stat-label">今日学习(分钟)</div></div>
+        <div class="stat-card"><div class="stat-num" id="statMastered">0</div><div class="stat-label">已掌握词条</div></div>
+        <div class="stat-card"><div class="stat-num" id="statUnmastered">0</div><div class="stat-label">未掌握词条</div></div>
+        <div class="stat-card"><div class="stat-num" id="statWordAcc">--</div><div class="stat-label">单词正确率</div></div>
+        <div class="stat-card"><div class="stat-num" id="statTotalWords">0</div><div class="stat-label">词库总词条</div></div>
+      </div>
+      <div class="card">
+        <h3>最容易出错的单词</h3>
+        <div id="statWrongWords" class="wrong-list"></div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="view" id="view-settings">
+      <div class="section-head">
+        <h2>设置</h2>
+        <div class="muted">所有数据仅保存在当前浏览器</div>
+      </div>
+
+      <div class="card settings-card">
+        <h3>学习安排</h3>
+        <label class="field"><span>考试日期</span><input type="date" id="setExamDate"></label>
+        <label class="field"><span>每日新词目标</span><input type="number" id="setDailyGoal" min="1" max="200" step="1"></label>
+        <label class="field"><span>每周复习日</span>
+          <select id="setReviewDay">
+            <option value="0">周日</option><option value="1">周一</option><option value="2">周二</option>
+            <option value="3">周三</option><option value="4">周四</option><option value="5">周五</option>
+            <option value="6">周六</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="card settings-card">
+        <h3>外观</h3>
+        <div class="field">
+          <span>主题</span>
+          <div class="theme-options" id="themeOptions">
+            <button class="theme-dot" data-theme="light">浅色</button>
+            <button class="theme-dot" data-theme="eye">护眼</button>
+            <button class="theme-dot" data-theme="solid">纯色</button>
+            <button class="theme-dot" data-theme="image">图片</button>
+          </div>
+        </div>
+        <label class="field"><span>背景图片(可选)</span><input type="file" id="setBgImage" accept="image/*"></label>
+        <label class="field"><span>背景遮罩透明度 <b id="bgOverlayVal"></b></span><input type="range" id="setBgOverlay" min="0" max="0.9" step="0.05"></label>
+        <p class="muted small">遮罩越透明,背景图越清晰;文字可读性由遮罩保证。</p>
+      </div>
+
+      <div class="card settings-card">
+        <h3>语音与发音</h3>
+        <label class="field"><span>朗读语速</span><input type="range" id="setTtsRate" min="0.5" max="1.5" step="0.1"></label>
+        <p class="muted small">发音使用浏览器内置语音合成(<span id="ttsSupport"></span>)。</p>
+      </div>
+
+      <div class="card settings-card">
+        <h3>AI 作文批改服务(可选)</h3>
+        <label class="field"><span>接口地址</span><input type="text" id="setAiBase" placeholder="https://api.example.com/v1"></label>
+        <label class="field"><span>API Key</span><input type="password" id="setAiKey" placeholder="sk-..."></label>
+        <label class="field"><span>模型名称</span><input type="text" id="setAiModel" placeholder="gpt-4o-mini"></label>
+        <div class="toolbar-actions" style="margin-bottom:10px">
+          <button class="btn primary" id="setAiSave">保存 AI 配置</button>
+          <button class="btn" id="setAiTest">测试连接</button>
+        </div>
+        <p class="muted small" id="setAiStatus">Key 仅保存在本浏览器;个人使用场景下请注意设备安全。未配置时作文模块不会显示评分。</p>
+      </div>
+
+      <div class="card settings-card">
+        <h3>数据管理</h3>
+        <div class="toolbar-actions">
+          <button class="btn" id="dataExport">导出数据</button>
+          <button class="btn" id="dataImportBtn">导入数据</button>
+          <input type="file" id="dataImport" accept="application/json" hidden>
+          <button class="btn danger" id="dataClear">清空全部数据</button>
+        </div>
+        <p class="muted small">导出为 JSON 文件,可在另一台设备导入以手动迁移;手机与电脑不会自动同步。</p>
+      </div>
+
+      <div class="card settings-card">
+        <h3>关于词库</h3>
+        <p class="muted small" id="aboutVocab"></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 底部导航(手机) ===== -->
+  <nav class="bottomnav">
+    <button class="nav-item active" data-view="home"><span class="ico">🏠</span>首页</button>
+    <button class="nav-item" data-view="vocab"><span class="ico">📖</span>单词</button>
+    <button class="nav-item" data-view="listening"><span class="ico">🎧</span>听力</button>
+    <button class="nav-item" data-view="writing"><span class="ico">✍️</span>作文</button>
+    <button class="nav-item" data-view="stats"><span class="ico">📊</span>统计</button>
+    <button class="nav-item" data-view="settings"><span class="ico">⚙️</span>设置</button>
+  </nav>
+</div>
+
+<!-- ===== 通用弹窗 ===== -->
+<div class="modal hidden" id="modal">
+  <div class="modal-mask" data-close="1"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="modalTitle"></h3>
+      <button class="btn ghost small" data-close="1">关闭</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script src="data/cet4.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/vocab.js"></script>
+<script src="js/listening.js"></script>
+<script src="js/writing.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
