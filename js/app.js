@@ -67,9 +67,14 @@ const App = (function () {
   }
 
   function showTimeHint(extra) {
+    const d = now();
+    const clock = $('netClock');
+    if (clock) {
+      clock.textContent = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+      clock.title = '网络时间(已自动校准):' + d.toLocaleString('zh-CN');
+    }
     const hint = $('timeSyncHint');
     if (!hint) return;
-    const d = now();
     const diff = Math.round(timeOffset / 1000);
     let text = `⏱ 网络时间:${d.toLocaleString('zh-CN')}`;
     if (Math.abs(diff) >= 1) text += `(已校准设备偏差 ${diff > 0 ? '+' : ''}${diff} 秒)`;
@@ -162,7 +167,7 @@ const App = (function () {
   function updateTimerDisplay() {
     const sec = (Store.daily().seconds || 0) + pendingSeconds;
     const m = Math.floor(sec / 60);
-    $('studyTimer').textContent = `今日 ${String(m).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
+    $('studyTimer').textContent = `今日学习 ${String(m).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
   }
 
   function startTimer() {
@@ -183,7 +188,7 @@ const App = (function () {
     setInterval(() => {
       if (document.hidden) return;           // 切后台暂停
       if (!isStudyView()) return;            // 只在练习页面计时
-      if (Date.now() - lastActivity > 300000) return; // 5 分钟无操作暂停(阅读/思考时间)
+      if (Date.now() - lastActivity > 600000) return; // 10 分钟无操作暂停(阅读/听力思考时间)
       pendingSeconds += 5;
       if (pendingSeconds >= 30) {
         Store.addStudySeconds(pendingSeconds);

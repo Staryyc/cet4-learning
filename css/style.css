@@ -92,6 +92,17 @@ body {
   border-radius: 999px;
 }
 .study-timer { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.net-clock {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  margin-right: 14px;
+}
+@media (max-width: 900px) {
+  .net-clock { font-size: 14px; margin-right: 8px; }
+  .study-timer { font-size: 12px; }
+}
 
 .sidebar {
   position: fixed;
