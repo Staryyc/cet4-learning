@@ -174,14 +174,10 @@ const Vocab = (function () {
   function stripSpaces(s) { return (s || '').replace(/\s+/g, ''); }
 
   function speak(text, lang) {
-    if (!('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang === 'uk' ? 'en-GB' : 'en-US';
-      u.rate = Number(Store.getSettings().ttsRate) || 0.9;
-      window.speechSynthesis.speak(u);
-    } catch (e) { /* 忽略 */ }
+    TTS.speak(text, {
+      lang: lang === 'uk' ? 'en-GB' : 'en-US',
+      rate: Number(Store.getSettings().ttsRate) || 0.9
+    });
   }
 
   function shuffle(arr) {

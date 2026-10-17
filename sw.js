@@ -1,11 +1,12 @@
 /* Service Worker — 离线缓存(PWA) */
-const CACHE = 'cet4-app-v2';
+const CACHE = 'cet4-app-v3';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './css/style.css',
   './js/storage.js',
+  './js/tts.js',
   './js/vocab.js',
   './js/listening.js',
   './js/writing.js',

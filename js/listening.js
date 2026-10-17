@@ -139,14 +139,28 @@ const Listening = (function () {
   const $ = id => document.getElementById(id);
 
   function speak(text, rateOverride) {
-    if (!('speechSynthesis' in window)) return;
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'en-US';
-      u.rate = rateOverride || Number(Store.getSettings().ttsRate) || 0.9;
-      window.speechSynthesis.speak(u);
-    } catch (e) { /* 忽略 */ }
+    TTS.speak(text, {
+      lang: 'en-US',
+      rate: rateOverride || Number(Store.getSettings().ttsRate) || 0.9
+    });
+  }
+
+  // 链式播放长文本(按句),可选重复遍数
+  function playSequence(text, rateOverride, repeatTimes, onDone) {
+    const rate = rateOverride || Number(Store.getSettings().ttsRate) || 0.9;
+    let left = Math.max(1, repeatTimes || 1);
+    function round() {
+      left -= 1;
+      TTS.speakSequence(text, {
+        rate,
+        onend: () => {
+          if (left > 0) {
+            setTimeout(round, 700);
+          } else if (onDone) onDone();
+        }
+      });
+    }
+    round();
   }
 
   function shuffle(arr) {
@@ -230,8 +244,7 @@ const Listening = (function () {
         b.addEventListener('click', () => answerSentence(b));
         options.appendChild(b);
       });
-      speak(d.lines[0]);
-      setTimeout(() => speak(d.lines[1]), 3500);
+      TTS.speakSequence(d.lines, { rate: Number(Store.getSettings().ttsRate) || 0.9 });
     } else {
       // 场景短文 + 挖空填词
       const sc = pick(scenePool);
@@ -256,9 +269,8 @@ const Listening = (function () {
       submit.addEventListener('click', answerScene);
       wrap.appendChild(submit);
       options.appendChild(wrap);
-      // 朗读两遍
-      speak(sc.en);
-      setTimeout(() => speak(sc.en), 6000);
+      // 逐句链式朗读(稳定,不会互相打断)
+      playSequence(sc.en, null, 1);
     }
     updateBadge();
   }
@@ -369,11 +381,13 @@ const Listening = (function () {
   }
   function repeat() {
     if (!current) return;
-    speak(current.text);
-    setTimeout(() => speak(current.text), 2500);
-    setTimeout(() => speak(current.text), 5000);
-    $('listenRepeat').classList.add('playing');
-    setTimeout(() => $('listenRepeat').classList.remove('playing'), 6000);
+    const btn = $('listenRepeat');
+    btn.classList.add('playing');
+    btn.textContent = '🔁 播放中…';
+    playSequence(current.text, null, 2, () => {
+      btn.classList.remove('playing');
+      btn.textContent = '🔁 重复';
+    });
   }
 
   /* ---------- 初始化 ---------- */

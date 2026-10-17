@@ -46,13 +46,42 @@ const App = (function () {
   }
 
   /* ---------- 首页 ---------- */
+  let timeOffset = 0;      // 网络时间 - 本地时间(毫秒)
+
+  function now() {
+    return new Date(Date.now() + timeOffset);
+  }
+
+  async function syncTime() {
+    const hint = $('timeSyncHint');
+    try {
+      const res = await fetch(location.href.split('#')[0], { method: 'HEAD', cache: 'no-store' });
+      const dateStr = res.headers.get('date');
+      if (dateStr) {
+        const serverMs = new Date(dateStr).getTime();
+        if (!isNaN(serverMs)) {
+          timeOffset = serverMs - Date.now();
+          if (hint) {
+            const diff = Math.round(timeOffset / 1000);
+            hint.textContent = Math.abs(diff) >= 1
+              ? `⏱ 倒计时已按网络时间校准(本地偏差 ${diff > 0 ? '+' : ''}${diff} 秒)`
+              : '⏱ 倒计时已按网络时间校准';
+          }
+        }
+      }
+    } catch (e) {
+      if (hint) hint.textContent = '⏱ 无法获取网络时间,暂用设备时间';
+    }
+    refreshHome();
+  }
+
   function daysUntil(dateStr) {
     if (!dateStr) return null;
     const target = new Date(dateStr + 'T00:00:00');
     if (isNaN(target)) return null;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return Math.round((target - now) / 86400000);
+    const today = now();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((target - today) / 86400000);
   }
 
   function refreshHome() {
@@ -412,6 +441,8 @@ const App = (function () {
     refreshHome();
     startTimer();
     registerSW();
+    if (window.TTS) TTS.loadVoices();
+    syncTime();
     switchView('home');
   }
 
